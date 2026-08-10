@@ -1,7 +1,9 @@
 {
   "domain": "furrytail",
   "name": "FurryTail",
-  "codeowners": ["@CamiloValderruten"],
+  "codeowners": [
+    "@CamiloValderruten"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/CamiloValderruten/hass-furrytail",
   "integration_type": "hub",
