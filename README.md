@@ -4,14 +4,16 @@ Custom Home Assistant integration for **FurryTail Home** automatic litter boxes 
 
 Reverse-engineered from the FurryTail Home iOS app against `app.prod-iot.furrytail.net`.
 
-## Features (v0.1 — read-only)
+## Features (v0.1)
 
+**Read (working):**
 - Cloud online / cleaning state
 - Last visit time, duration, weight, and pet
 - Per-pet weight from the FurryTail pet profiles
 - Clean delay + Wi‑Fi / MCU firmware versions
 
-Commands (start clean, light, schedules) are not wired yet — needs a second MITM capture.
+**Write (not shipping yet):**
+Commands (clean, light, schedules) go over **AWS IoT Device Shadow MQTT**, not REST. The HTTP proxy cannot see that traffic on iOS. Protocol is identified (Granwin shadow update); live publish from this account is not yet accepted by the device. See [`docs/api-notes.md`](docs/api-notes.md).
 
 ## Install (HACS)
 

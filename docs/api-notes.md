@@ -35,7 +35,7 @@ Captured 2026-08-10 against iOS FurryTail Home (`wuwei/1.0.16`).
 | POST | `/msg/push/switch/list` | Push switches |
 | POST | `/cloud-message/mobile/set` | Push token registration |
 
-## Login (probed)
+## Login (captured)
 
 `POST /app/user/login`
 
@@ -44,17 +44,61 @@ Captured 2026-08-10 against iOS FurryTail Home (`wuwei/1.0.16`).
   "merchantId": "100000000000000000",
   "account": "<email>",
   "password": "<password>",
+  "phoneCode": "1",
   "lang": "en_US"
 }
 ```
 
-Returns `code: 0` with a user JWT (field name confirmed at runtime by the client’s token extractor). Authorization header on later calls is the raw JWT (no `Bearer` prefix).
+Success `info`:
 
-## Not captured yet
+```json
+{
+  "clientId": "iQVeD9MtrQVcogdf",
+  "clientName": "App客户端",
+  "name": "...",
+  "expiration": "2592000",
+  "token": "<user JWT>",
+  "refreshToken": "<refresh JWT>"
+}
+```
 
-- Command writes (clean / flatten / empty / light / schedule / DND)
-- MQTT publish/subscribe payloads on the AWS IoT topic
-- Exact login success JSON field names (client accepts several)
+Authorization on later calls is the raw `token` JWT (no `Bearer` prefix).
+
+## Commands / writes (blocked on MQTT)
+
+HTTP MITM of clean / light / schedule actions shows **no REST write calls**. Control matches Granwin Android SDK:
+
+1. `POST /device/add/policy` → Cognito identity + AWS IoT endpoint + OpenID token
+2. `GetCredentialsForIdentity` with `Logins["cognito-identity.amazonaws.com"]=policy.token`
+3. MQTT over WebSockets (SigV4) to `*-ats.iot.us-east-1.amazonaws.com`
+4. Subscribe (status): `granwin/<identityId>/message`
+5. Publish (control): `$aws/things/<MAC>/shadow/update` QoS1
+
+```json
+{
+  "state": {
+    "desired": {
+      "<dp>": <value>,
+      "userControllerData": {
+        "product_key": "0002f3c7d847ce72",
+        "action_type": "1",
+        "action_type_name": "android",
+        "account": "<identityId>"
+      }
+    }
+  }
+}
+```
+
+Reference: Granwin `AwsUtils.setDeviceStatus` in open RN/Agora SDKs.
+
+**Gap (2026-08-10):** With this account’s Cognito creds we can CONNECT and SUBSCRIBE, but shadow `get`/`update` produce no `accepted`/`rejected` and do not change `/device/query/device/property`. The iOS app’s MQTT traffic bypasses the HTTP proxy, so the exact publish topic/payload was not captured. Need either a working shadow publish (right thing name / policy) or an MQTT-level capture (Android + unpin, or Frida).
+
+## Not solved yet
+
+- Confirmed working clean / flatten / light / schedule commands from HA
+- Exact DP ids/names for each control
+- MQTT publish that the device accepts for this account
 
 ## Device identity (from place index)
 

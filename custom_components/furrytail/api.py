@@ -48,11 +48,16 @@ class FurryTailApi:
         self._account = account
         self._password = password
         self._token = token
+        self._refresh_token: str | None = None
         self._lang = lang
 
     @property
     def token(self) -> str | None:
         return self._token
+
+    @property
+    def refresh_token(self) -> str | None:
+        return self._refresh_token
 
     async def async_login(self) -> str:
         """Authenticate and store the user JWT."""
@@ -60,6 +65,7 @@ class FurryTailApi:
             "merchantId": MERCHANT_ID,
             "account": self._account,
             "password": self._password,
+            "phoneCode": "1",
             "lang": self._lang,
         }
         data = await self._request(
@@ -72,6 +78,8 @@ class FurryTailApi:
         if not token:
             raise FurryTailAuthError("Login succeeded but no token was returned")
         self._token = token
+        info = data.get("info") if isinstance(data.get("info"), dict) else {}
+        self._refresh_token = info.get("refreshToken")
         return token
 
     async def async_ensure_token(self) -> str:
