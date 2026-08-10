@@ -74,7 +74,7 @@ class FurryTailOnlineBinarySensor(FurryTailDeviceEntity, BinarySensorEntity):
 
 
 class FurryTailCleaningBinarySensor(FurryTailDeviceEntity, BinarySensorEntity):
-    """Whether a clean cycle appears active (DP 24)."""
+    """Whether a litter-box cycle is active (DP 2)."""
 
     entity_description = BinarySensorEntityDescription(
         key="cleaning",

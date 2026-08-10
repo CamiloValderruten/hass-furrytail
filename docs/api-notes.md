@@ -83,6 +83,18 @@ The app's HTTP fallback is the simplest control path:
 
 Night-light brightness was verified from the Mac at `20` and `100`. DP `22` accepts values from `0` to `100`.
 
+One-shot commands use the same endpoint with a value of `1`:
+
+| DP | Command | Verification |
+| --- | --- | --- |
+| `3` | Clean | Verified from the Mac; returns to `0` after the cycle |
+| `4` | Flatten | Verified from the Mac; returns to `0` after the cycle |
+| `5` | Empty / change litter | Inferred from the app; intentionally not run |
+
+During verified clean and flatten cycles, DP `2` changed from `0` (idle) to
+`2` (running), then returned to `0`. DP `24` remained `1` throughout, so its
+meaning is not established.
+
 The app normally publishes the typed command over AWS IoT MQTT at QoS 1:
 
 ```text
@@ -105,7 +117,7 @@ The app normally publishes the typed command over AWS IoT MQTT at QoS 1:
 
 ## Not solved yet
 
-- Clean, flatten, empty, and schedule controls
+- Schedule controls
 - Exact values and behavior for the remaining writable datapoints
 
 ## Device identity (from place index)
@@ -125,17 +137,21 @@ From `/device/query/device/property` `info` plus event correlation:
 | `onlineStatus` | bool | Cloud online |
 | `20` | int (e.g. 29–77) | Visit duration (seconds?) — appears on toilet events |
 | `21` | int (~5600–6700) | Cat weight grams — matches pet profiles |
-| `24` | 0/1 | Cleaning / cycle state |
+| `2` | 0/2 | Machine state (`0` idle, `2` during verified commands) |
+| `3` | 0/1 | Clean command / active flag |
+| `4` | 0/1 | Flatten command / active flag |
+| `5` | 0/1 | Empty command / active flag (not physically tested) |
+| `24` | 0/1 | Unknown; remained `1` while idle and running |
 | `25` | `"true"` | Toilet / visit event flag (`eventId` 25) |
 | `26` | `"true"` | Event flag (`eventId` 26) — often with `24` |
 | `27` | `"true"` | Event flag (`eventId` 27) |
 | `28` | `"true"` | Event flag (`eventId` 28) |
 | `8` | `30` | Possibly clean delay (minutes) |
 | `6` | `0/1` | Possibly auto-clean enable |
-| `1`–`5`, `9`, `10`, `14`, `16`, `18`, `19`, `23`, `29` | mostly `0` | Unknown flags/enums |
+| `1`, `9`, `10`, `14`, `16`, `18`, `19`, `23`, `29` | mostly `0` | Unknown flags/enums |
 | `12` | `"00"` | Unknown |
 | `15`, `17` | `16000800` | Possibly schedule bitfields / times |
-| `22` | `42` | Unknown (level? humidity?) |
+| `22` | 0–100 | Night-light brightness |
 | `30` | `1` | Unknown |
 | `33` | `8` | Unknown |
 
