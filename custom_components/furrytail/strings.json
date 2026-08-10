@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "FurryTail Home",
+        "description": "Sign in with the same email and password used in the FurryTail Home app.",
+        "data": {
+          "account": "Email",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate FurryTail",
+        "description": "Your FurryTail session expired. Enter your password again.",
+        "data": {
+          "account": "Email",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password.",
+      "cannot_connect": "Could not reach FurryTail cloud.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This FurryTail account is already configured.",
+      "reauth_successful": "Re-authentication successful."
+    }
+  }
+}

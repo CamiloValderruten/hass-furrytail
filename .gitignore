@@ -1,0 +1,23 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Secrets / captures
+.env
+captures/
+*.mitm
+*.flow
+*.har
+.token
+ft_token*
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# HA test junk
+.config/
