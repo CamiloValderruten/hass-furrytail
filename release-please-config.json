@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "92b91ec80107afff8b13bb0de18ecdf4b0154026",
+  "release-type": "simple",
+  "packages": {
+    ".": {
+      "package-name": "hass-furrytail",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "custom_components/furrytail/manifest.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}

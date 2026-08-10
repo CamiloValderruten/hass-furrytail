@@ -64,41 +64,61 @@ Success `info`:
 
 Authorization on later calls is the raw `token` JWT (no `Bearer` prefix).
 
-## Commands / writes (blocked on MQTT)
+FurryTail permits only one authenticated device per account. Logging in through Home Assistant invalidates the phone app session for that account. Use a separate email account—not a `+` address alias—and invite it to the same FurryTail home.
 
-HTTP MITM of clean / light / schedule actions shows **no REST write calls**. Control matches Granwin Android SDK:
+## Commands / writes
 
-1. `POST /device/add/policy` → Cognito identity + AWS IoT endpoint + OpenID token
-2. `GetCredentialsForIdentity` with `Logins["cognito-identity.amazonaws.com"]=policy.token`
-3. MQTT over WebSockets (SigV4) to `*-ats.iot.us-east-1.amazonaws.com`
-4. Subscribe (status): `granwin/<identityId>/message`
-5. Publish (control): `$aws/things/<MAC>/shadow/update` QoS1
+The app's HTTP fallback is the simplest control path:
+
+`POST /device/control/device`
 
 ```json
 {
-  "state": {
-    "desired": {
-      "<dp>": <value>,
-      "userControllerData": {
-        "product_key": "0002f3c7d847ce72",
-        "action_type": "1",
-        "action_type_name": "android",
-        "account": "<identityId>"
-      }
-    }
+  "mac": "<MAC>",
+  "propertyMap": {
+    "22": 100
   }
 }
 ```
 
-Reference: Granwin `AwsUtils.setDeviceStatus` in open RN/Agora SDKs.
+Night-light brightness was verified from the Mac at `20` and `100`. DP `22` accepts values from `0` to `100`.
 
-**Gap (2026-08-10):** With this account’s Cognito creds we can CONNECT and SUBSCRIBE, but shadow `get`/`update` produce no `accepted`/`rejected` and do not change `/device/query/device/property`. The iOS app’s MQTT traffic bypasses the HTTP proxy, so the exact publish topic/payload was not captured. Need either a working shadow publish (right thing name / policy) or an MQTT-level capture (Android + unpin, or Frida).
+One-shot commands use the same endpoint with a value of `1`:
+
+| DP | Command | Verification |
+| --- | --- | --- |
+| `3` | Clean | Verified from the Mac; returns to `0` after the cycle |
+| `4` | Flatten | Verified from the Mac; returns to `0` after the cycle |
+| `5` | Empty / change litter | Inferred from the app; intentionally not run |
+
+During verified clean and flatten cycles, DP `2` changed from `0` (idle) to
+`2` (running), then returned to `0`. DP `24` remained `1` throughout, so its
+meaning is not established.
+
+The app normally publishes the typed command over AWS IoT MQTT at QoS 1:
+
+```text
+<productKey>/<MAC>/user/get
+```
+
+```json
+{
+  "data": {
+    "22": {
+      "type": 17,
+      "value": 100
+    }
+  },
+  "time": 1786400256
+}
+```
+
+`type: 17` is the app's `UINT_8` datapoint type, and `time` is the current Unix timestamp in seconds. This is a Granwin topic, not an AWS Device Shadow update.
 
 ## Not solved yet
 
-- Confirmed working clean / flatten / light / schedule commands from HA
-- Exact DP ids/names for each control
-- MQTT publish that the device accepts for this account
+- Schedule controls
+- Exact values and behavior for the remaining writable datapoints
 
 ## Device identity (from place index)
 
@@ -117,17 +137,21 @@ From `/device/query/device/property` `info` plus event correlation:
 | `onlineStatus` | bool | Cloud online |
 | `20` | int (e.g. 29–77) | Visit duration (seconds?) — appears on toilet events |
 | `21` | int (~5600–6700) | Cat weight grams — matches pet profiles |
-| `24` | 0/1 | Cleaning / cycle state |
+| `2` | 0/2 | Machine state (`0` idle, `2` during verified commands) |
+| `3` | 0/1 | Clean command / active flag |
+| `4` | 0/1 | Flatten command / active flag |
+| `5` | 0/1 | Empty command / active flag (not physically tested) |
+| `24` | 0/1 | Unknown; remained `1` while idle and running |
 | `25` | `"true"` | Toilet / visit event flag (`eventId` 25) |
 | `26` | `"true"` | Event flag (`eventId` 26) — often with `24` |
 | `27` | `"true"` | Event flag (`eventId` 27) |
 | `28` | `"true"` | Event flag (`eventId` 28) |
 | `8` | `30` | Possibly clean delay (minutes) |
 | `6` | `0/1` | Possibly auto-clean enable |
-| `1`–`5`, `9`, `10`, `14`, `16`, `18`, `19`, `23`, `29` | mostly `0` | Unknown flags/enums |
+| `1`, `9`, `10`, `14`, `16`, `18`, `19`, `23`, `29` | mostly `0` | Unknown flags/enums |
 | `12` | `"00"` | Unknown |
 | `15`, `17` | `16000800` | Possibly schedule bitfields / times |
-| `22` | `42` | Unknown (level? humidity?) |
+| `22` | 0–100 | Night-light brightness |
 | `30` | `1` | Unknown |
 | `33` | `8` | Unknown |
 
