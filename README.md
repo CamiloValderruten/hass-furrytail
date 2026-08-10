@@ -11,9 +11,7 @@ Reverse-engineered from the FurryTail Home iOS app against `app.prod-iot.furryta
 - Last visit time, duration, weight, and pet
 - Per-pet weight from the FurryTail pet profiles
 - Clean delay + Wi‑Fi / MCU firmware versions
-
-**Write (not shipping yet):**
-Commands (clean, light, schedules) go over **AWS IoT Device Shadow MQTT**, not REST. The HTTP proxy cannot see that traffic on iOS. Protocol is identified (Granwin shadow update); live publish from this account is not yet accepted by the device. See [`docs/api-notes.md`](docs/api-notes.md).
+- Dimmable night-light control
 
 ## Install (HACS)
 
@@ -30,6 +28,7 @@ Copy `custom_components/furrytail` into your HA `custom_components` directory an
 ## Notes
 
 - Account auth uses `POST /app/user/login` with FurryTail’s merchant id.
+- FurryTail permits only one authenticated device per account. Signing in through Home Assistant logs that account out of the phone app. Use a separate email account—not a `+` address alias—and invite it to your home.
 - Device state is polled about every 2 minutes.
 - Your password is stored in the HA config entry (same pattern as other cloud integrations). Prefer a dedicated app password if FurryTail ever adds one.
 

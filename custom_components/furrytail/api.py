@@ -112,6 +112,16 @@ class FurryTailApi:
         )
         return data.get("info") or {}
 
+    async def async_control_device(
+        self, mac: str, property_map: dict[str, Any]
+    ) -> None:
+        """Set one or more device properties."""
+        await self._request(
+            "POST",
+            "/device/control/device",
+            json_body={"mac": mac, "propertyMap": property_map},
+        )
+
     async def async_event_log(
         self,
         mac: str,

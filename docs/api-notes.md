@@ -64,41 +64,49 @@ Success `info`:
 
 Authorization on later calls is the raw `token` JWT (no `Bearer` prefix).
 
-## Commands / writes (blocked on MQTT)
+FurryTail permits only one authenticated device per account. Logging in through Home Assistant invalidates the phone app session for that account. Use a separate email account—not a `+` address alias—and invite it to the same FurryTail home.
 
-HTTP MITM of clean / light / schedule actions shows **no REST write calls**. Control matches Granwin Android SDK:
+## Commands / writes
 
-1. `POST /device/add/policy` → Cognito identity + AWS IoT endpoint + OpenID token
-2. `GetCredentialsForIdentity` with `Logins["cognito-identity.amazonaws.com"]=policy.token`
-3. MQTT over WebSockets (SigV4) to `*-ats.iot.us-east-1.amazonaws.com`
-4. Subscribe (status): `granwin/<identityId>/message`
-5. Publish (control): `$aws/things/<MAC>/shadow/update` QoS1
+The app's HTTP fallback is the simplest control path:
+
+`POST /device/control/device`
 
 ```json
 {
-  "state": {
-    "desired": {
-      "<dp>": <value>,
-      "userControllerData": {
-        "product_key": "0002f3c7d847ce72",
-        "action_type": "1",
-        "action_type_name": "android",
-        "account": "<identityId>"
-      }
-    }
+  "mac": "<MAC>",
+  "propertyMap": {
+    "22": 100
   }
 }
 ```
 
-Reference: Granwin `AwsUtils.setDeviceStatus` in open RN/Agora SDKs.
+Night-light brightness was verified from the Mac at `20` and `100`. DP `22` accepts values from `0` to `100`.
 
-**Gap (2026-08-10):** With this account’s Cognito creds we can CONNECT and SUBSCRIBE, but shadow `get`/`update` produce no `accepted`/`rejected` and do not change `/device/query/device/property`. The iOS app’s MQTT traffic bypasses the HTTP proxy, so the exact publish topic/payload was not captured. Need either a working shadow publish (right thing name / policy) or an MQTT-level capture (Android + unpin, or Frida).
+The app normally publishes the typed command over AWS IoT MQTT at QoS 1:
+
+```text
+<productKey>/<MAC>/user/get
+```
+
+```json
+{
+  "data": {
+    "22": {
+      "type": 17,
+      "value": 100
+    }
+  },
+  "time": 1786400256
+}
+```
+
+`type: 17` is the app's `UINT_8` datapoint type, and `time` is the current Unix timestamp in seconds. This is a Granwin topic, not an AWS Device Shadow update.
 
 ## Not solved yet
 
-- Confirmed working clean / flatten / light / schedule commands from HA
-- Exact DP ids/names for each control
-- MQTT publish that the device accepts for this account
+- Clean, flatten, empty, and schedule controls
+- Exact values and behavior for the remaining writable datapoints
 
 ## Device identity (from place index)
 

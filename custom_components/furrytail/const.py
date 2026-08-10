@@ -22,6 +22,7 @@ EVENT_VISIT: Final = 25
 DP_CLEAN_STATE: Final = "24"
 DP_VISIT_DURATION: Final = "20"
 DP_VISIT_WEIGHT: Final = "21"
+DP_LIGHT_BRIGHTNESS: Final = "22"
 DP_AUTO_CLEAN: Final = "6"
 DP_CLEAN_DELAY: Final = "8"
 
@@ -30,4 +31,4 @@ CONF_TOKEN: Final = "token"
 
 UPDATE_INTERVAL = timedelta(minutes=2)
 
-PLATFORMS: Final = ["binary_sensor", "sensor"]
+PLATFORMS: Final = ["binary_sensor", "light", "sensor"]
